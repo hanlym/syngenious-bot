@@ -66,4 +66,4 @@ async def self(interaction: discord.Interaction, title:str, description:str):
     view = intButt(interaction.user, title)
     await interaction.response.send_message(embed=postEmb, view=view)
 
-bot.run("MTAxNTAwOTE0NTQ4MjY0OTc2MA.Gcwcds.JzND2NfHkdGlOT_mJhaV2PBmajZgMnWKRD8j_Y")
+bot.run("")
