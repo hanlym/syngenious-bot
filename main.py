@@ -2,8 +2,6 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 
-#MTAxNTAwOTE0NTQ4MjY0OTc2MA.Gcwcds.JzND2NfHkdGlOT_mJhaV2PBmajZgMnWKRD8j_Y
-
 bot = commands.Bot(command_prefix="!", intents=discord.Intents.default())
 
 class abot(discord.Client):
@@ -66,4 +64,4 @@ async def self(interaction: discord.Interaction, title:str, description:str):
     view = intButt(interaction.user, title)
     await interaction.response.send_message(embed=postEmb, view=view)
 
-bot.run("")
+bot.run("token")
