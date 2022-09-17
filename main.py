@@ -68,14 +68,17 @@ async def self(interaction:discord.Interaction, user:discord.Member, rating:int)
     if not 0 <= rating <= 5:
         await interaction.response.send_message(content="Rating must be an integer between 0 and 5", ephemeral=True)
     else:
-        currRating = collection.find_one({"_id":user.name})["rating"]
-        ratings = collection.find_one({"_id":user.name})["ratings"]
-        totRating = round(currRating * ratings) + rating
-        newRating = round(totRating/(ratings+1), 1)
+        if not collection.find_one({"_id":interaction.user.name}):
+            currRating = collection.find_one({"_id":user.name})["rating"]
+            ratings = collection.find_one({"_id":user.name})["ratings"]
+            totRating = round(currRating * ratings) + rating
+            newRating = round(totRating/(ratings+1), 1)
 
-        collection.update_one({"_id":user.name}, {"$set":{"rating":newRating}})
-        collection.update_one({"_id":user.name}, {"$inc":{"ratings":1}})
-        await interaction.response.send_message(content=f"Gave user {user.nick if user.nick else user.name} rating of {rating}/5", ephemeral=True)
+            collection.update_one({"_id":user.name}, {"$set":{"rating":newRating}})
+            collection.update_one({"_id":user.name}, {"$inc":{"ratings":1}})
+            await interaction.response.send_message(content=f"Gave user {user.nick if user.nick else user.name} rating of {rating}/5", ephemeral=True)
+        else:
+            await interaction.response.send_message(content="User profile does not exist.", ephemeral=True)
 
 @tree.command(name="role", description="display role menu", guild=discord.Object(id=id))
 async def self(interaction:discord.Interaction):
@@ -88,7 +91,7 @@ async def self(interaction:discord.Interaction):
 
 @tree.command(name="profileconfig", description="create or update your profile", guild=discord.Object(id=id))
 async def self(interaction:discord.Interaction, bio:str, skills_and_interests:str):
-    if u.length(collection.find({"_id":interaction.user.name})) != 0:
+    if collection.find({"_id":interaction.user.name}):
         #update profile
         collection.update_one({"_id":interaction.user.name}, {"$set":{
             "bio":bio,
