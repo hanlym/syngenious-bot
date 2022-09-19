@@ -10,7 +10,7 @@ class ProfileCog(commands.Cog):
         self.bot = bot
         self.users = self.bot.db["users"]
         
-    @app_commands.command(name="profile", description="Gets the profile of a specified user", guild=discord.Object(id=server_id))
+    @app_commands.command(name="profile", description="Gets the profile of a specified user")
     async def profile(self, interaction:discord.Interaction, user:discord.Member):
         profile = self.users.find_one({"_id":user.name})
         if not profile:
@@ -26,7 +26,7 @@ class ProfileCog(commands.Cog):
 
             await interaction.response.send_message(embed=profileEmb, ephemeral=True)
 
-    @app_commands.command(name="profileconfig", description="create or update your profile", guild=discord.Object(id=server_id))
+    @app_commands.command(name="profileconfig", description="create or update your profile")
     async def profileconfig(self, interaction:discord.Interaction, bio:str, skills_and_interests:str):
         if self.users.count_documents({"_id":interaction.user.name}) == 0:
             #update profile
@@ -38,4 +38,5 @@ class ProfileCog(commands.Cog):
             await interaction.response.send_message(content="Updated profile.", ephemeral=True)
 
 async def setup(bot: commands.Bot) -> None:
-    await bot.add_cog(ProfileCog(bot))
+    await bot.add_cog(ProfileCog(bot), guild=discord.Object(id=server_id))
+    await bot.tree.sync(guild=discord.Object(id=server_id))

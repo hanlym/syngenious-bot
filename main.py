@@ -17,8 +17,8 @@ load_dotenv()
 extensions = [
   'cogs.DevTools',
   'cogs.Profiles',
-  'cogs.Projects'
-  'cogs.Polls'
+  'cogs.Projects',
+#   'cogs.Polls'
 ]
 
 # #connect to db
@@ -27,71 +27,33 @@ extensions = [
 # global collection
 # collection = db["users"]
 
-intents = discord.Intents.default()
-intents.members = True
-
-bot = commands.Bot(command_prefix="/", intents=intents)
-
-server_id = 1003666789995135006
-
-class abot(discord.Client):
-    def __init__(self):
-        super().__init__(intents=intents)
+class abot(commands.Bot):
+    def __init__(self, command_prefix, intents):
+        super().__init__(command_prefix=command_prefix, intents=intents)
         self.synced = False
         self.db = MongoClient(os.getenv("MONGODB_CONNECTION_STRING"))["alethia"]
         global collection
         collection = self.db["users"]
 
-        # self.extensions=[
-        #     "cogs.ping",
-        #     "cogs.admin",
-        #     "cogs.profile",
-        #     "cogs.project"
-        # ]
-
-    # async def setup_hook(self):
-    #     for ext in self.extensions:
-    #         await self.load_extension(ext)
+    async def setup_hook(self):
+        for ext in extensions:
+            await self.load_extension(ext)
 
     async def on_ready(self):
-        await tree.sync(guild=discord.Object(id=server_id))
+        await self.tree.sync(guild=discord.Object(id=server_id))
         self.synced = True
         print("Bot is online")
 
-bot = abot()
-tree = app_commands.CommandTree(bot)
+intents = discord.Intents.default()
+intents.members = True
 
-@tree.command(name="ping", description="Pong!", guild=discord.Object(id=server_id))
-async def self(interaction: discord.Interaction):
-    await interaction.response.send_message("Pong!", ephemeral=True)
+server_id = 1003666789995135006
 
-@tree.command(name="post", description="Create a project post", guild=discord.Object(id=server_id))
-async def self(interaction:discord.Interaction, title:str, description:str):
-    postEmb = discord.Embed(title=title, colour=discord.Colour.dark_gray())
-    postEmb.add_field(name="Description", value=description)
-    
-    view = b.IntButt(interaction.user, title)
-    await interaction.response.send_message(embed=postEmb, view=view)
+bot = abot(command_prefix="/", intents=intents)
+tree = bot.tree
 
-@tree.command(name="rate", description="Rate a specified user", guild=discord.Object(id=server_id))
-async def self(interaction:discord.Interaction, user:discord.Member, rating:int):
-    
-    if not 1 <= rating <= 5:
-        await interaction.response.send_message(content="Rating must be an integer between 1 and 5", ephemeral=True)
-    else:
-        if u.length(collection.find({"_id":interaction.user.name})) != 0:
-            currRating = collection.find_one({"_id":user.name})["rating"]
-            ratings = collection.find_one({"_id":user.name})["ratings"]
-            totRating = round(currRating * ratings) + rating
-            newRating = round(totRating/(ratings+1), 1)
 
-            collection.update_one({"_id":user.name}, {"$set":{"rating":newRating}})
-            collection.update_one({"_id":user.name}, {"$inc":{"ratings":1}})
-            await interaction.response.send_message(content=f"Gave user {user.nick if user.nick else user.name} rating of {rating}/5", ephemeral=True)
-        else:
-            await interaction.response.send_message(content="User profile does not exist.", ephemeral=True)
-
-@tree.command(name="role", description="Display role menu (admins only)", guild=discord.Object(id=id))
+@tree.command(name="role", description="Display role menu (admins only)", guild=discord.Object(id=server_id))
 async def self(interaction:discord.Interaction):
     adminRole = get(interaction.guild.roles, name="admin")
     if adminRole not in interaction.user.roles:
@@ -108,6 +70,6 @@ async def self(interaction:discord.Interaction):
     await interaction.user.send(content="Visit the website to set up your profile", view=view)
 
 if __name__=='__main__':
-    for extension in extensions:
-        bot.load_extension(extension)
+    # for extension in extensions:
+    #     bot.load_extension(extension)
     bot.run(os.getenv("BOT_TOKEN"))
