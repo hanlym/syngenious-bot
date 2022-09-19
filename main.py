@@ -30,7 +30,7 @@ extensions = [
 intents = discord.Intents.default()
 intents.members = True
 
-bot = commands.Bot(command_prefix="!", intents=intents)
+bot = commands.Bot(command_prefix="/", intents=intents)
 
 server_id = 1003666789995135006
 
@@ -42,12 +42,22 @@ class abot(discord.Client):
         global collection
         collection = self.db["users"]
 
+        # self.extensions=[
+        #     "cogs.ping",
+        #     "cogs.admin",
+        #     "cogs.profile",
+        #     "cogs.project"
+        # ]
+
+    # async def setup_hook(self):
+    #     for ext in self.extensions:
+    #         await self.load_extension(ext)
+
     async def on_ready(self):
         await tree.sync(guild=discord.Object(id=server_id))
         self.synced = True
         print("Bot is online")
 
-                
 bot = abot()
 tree = app_commands.CommandTree(bot)
 
@@ -66,10 +76,10 @@ async def self(interaction:discord.Interaction, title:str, description:str):
 @tree.command(name="rate", description="Rate a specified user", guild=discord.Object(id=server_id))
 async def self(interaction:discord.Interaction, user:discord.Member, rating:int):
     
-    if not 0 <= rating <= 5:
-        await interaction.response.send_message(content="Rating must be an integer between 0 and 5", ephemeral=True)
+    if not 1 <= rating <= 5:
+        await interaction.response.send_message(content="Rating must be an integer between 1 and 5", ephemeral=True)
     else:
-        if not collection.find_one({"_id":interaction.user.name}):
+        if u.length(collection.find({"_id":interaction.user.name})) != 0:
             currRating = collection.find_one({"_id":user.name})["rating"]
             ratings = collection.find_one({"_id":user.name})["ratings"]
             totRating = round(currRating * ratings) + rating
@@ -81,7 +91,7 @@ async def self(interaction:discord.Interaction, user:discord.Member, rating:int)
         else:
             await interaction.response.send_message(content="User profile does not exist.", ephemeral=True)
 
-@tree.command(name="role", description="display role menu", guild=discord.Object(id=server_id))
+@tree.command(name="role", description="Display role menu (admins only)", guild=discord.Object(id=id))
 async def self(interaction:discord.Interaction):
     adminRole = get(interaction.guild.roles, name="admin")
     if adminRole not in interaction.user.roles:
