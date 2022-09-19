@@ -12,7 +12,7 @@ import utils as u
 intents = discord.Intents.default()
 intents.members = True
 
-bot = commands.Bot(command_prefix="!", intents=intents)
+bot = commands.Bot(command_prefix="/", intents=intents)
 
 id = 69420
 
@@ -20,6 +20,17 @@ class abot(discord.Client):
     def __init__(self):
         super().__init__(intents=intents)
         self.synced = False
+
+        # self.extensions=[
+        #     "cogs.ping",
+        #     "cogs.admin",
+        #     "cogs.profile",
+        #     "cogs.project"
+        # ]
+
+    # async def setup_hook(self):
+    #     for ext in self.extensions:
+    #         await self.load_extension(ext)
 
     async def on_ready(self):
         await tree.sync(guild=discord.Object(id=id))
@@ -31,7 +42,7 @@ class abot(discord.Client):
         db = cluster["alethia"]
         global collection
         collection = db["users"]
-                
+
 bot = abot()
 tree = app_commands.CommandTree(bot)
 
@@ -47,8 +58,9 @@ async def self(interaction:discord.Interaction, user:discord.Member):
     else:
         profileEmb = discord.Embed(title=f"Profile of {user.nick if user.nick else user.name}", colour=discord.Colour.dark_grey())
         profileEmb.set_thumbnail(url=user.avatar.url)
-        profileEmb.add_field(name="Bio", value=profile["bio"], inline=False)
-        profileEmb.add_field(name="Skills and interests", value=profile["skills"], inline=False)
+
+        if profile["bio"]: profileEmb.add_field(name="Bio", value=profile["bio"], inline=False)
+        if profile["skills"]: profileEmb.add_field(name="Skills and interests", value=profile["skills"], inline=False)
         profileEmb.add_field(name="Projects completed", value=profile["projects"], inline=False)
         profileEmb.add_field(name="Average rating", value=profile["rating"], inline=False)
 
@@ -65,10 +77,10 @@ async def self(interaction:discord.Interaction, title:str, description:str):
 @tree.command(name="rate", description="Rate a specified user", guild=discord.Object(id=id))
 async def self(interaction:discord.Interaction, user:discord.Member, rating:int):
     
-    if not 0 <= rating <= 5:
-        await interaction.response.send_message(content="Rating must be an integer between 0 and 5", ephemeral=True)
+    if not 1 <= rating <= 5:
+        await interaction.response.send_message(content="Rating must be an integer between 1 and 5", ephemeral=True)
     else:
-        if not collection.find_one({"_id":interaction.user.name}):
+        if u.length(collection.find({"_id":interaction.user.name})) != 0:
             currRating = collection.find_one({"_id":user.name})["rating"]
             ratings = collection.find_one({"_id":user.name})["ratings"]
             totRating = round(currRating * ratings) + rating
@@ -80,7 +92,7 @@ async def self(interaction:discord.Interaction, user:discord.Member, rating:int)
         else:
             await interaction.response.send_message(content="User profile does not exist.", ephemeral=True)
 
-@tree.command(name="role", description="display role menu", guild=discord.Object(id=id))
+@tree.command(name="role", description="Display role menu (admins only)", guild=discord.Object(id=id))
 async def self(interaction:discord.Interaction):
     adminRole = get(interaction.guild.roles, name="admin")
     if adminRole not in interaction.user.roles:
@@ -89,27 +101,34 @@ async def self(interaction:discord.Interaction):
         view = b.AssignRole()
         await interaction.response.send_message(content="Get roles here", view=view)
 
-@tree.command(name="profileconfig", description="create or update your profile", guild=discord.Object(id=id))
-async def self(interaction:discord.Interaction, bio:str, skills_and_interests:str):
-    if collection.find({"_id":interaction.user.name}):
-        #update profile
+class ProfileMod(discord.ui.Modal, title="Edit profile"):
+    bio = discord.ui.TextInput(label="Bio:")
+    skills = discord.ui.TextInput(label="Skills and interests:") 
+
+    async def on_submit(self, interaction:discord.Interaction):
         collection.update_one({"_id":interaction.user.name}, {"$set":{
-            "bio":bio,
-            "skills":skills_and_interests
+            "bio":self.bio.value,
+            "skills":self.skills.value
         }})
-        
+
         await interaction.response.send_message(content="Updated profile.", ephemeral=True)
-    else:
-        #create new profile
-        collection.insert_one({
-            "_id":interaction.user.name,
-            "bio":bio,
-            "skills":skills_and_interests,
-            "projects":0,
-            "rating":0,
-            "ratings":0
-        })
-        await interaction.response.send_message(content="Created profile", ephemeral=True)
+
+@tree.command(name="profileconfig", description="Update your profile", guild=discord.Object(id=id))
+async def self(interaction:discord.Interaction):
+    if u.length(collection.find({"_id":interaction.user.name})) != 0:
+        #update profile
+        await interaction.response.send_modal(ProfileMod())
+    # else:
+    #     #create new profile
+    #     collection.insert_one({
+    #         "_id":interaction.user.name,
+    #         "bio":bio,
+    #         "skills":skills_and_interests,
+    #         "projects":0,
+    #         "rating":0,
+    #         "ratings":0
+    #     })
+    #     await interaction.response.send_message(content="Created profile", ephemeral=True)
 
 @tree.command(name="join", description="join", guild=discord.Object(id=id))
 async def self(interaction:discord.Interaction):
