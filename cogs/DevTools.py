@@ -4,7 +4,6 @@ from discord import app_commands
 from discord.ext import commands
 from discord.utils import get
 
-import butts as b
 
 server_id = 1003666789995135006
 
@@ -33,8 +32,8 @@ class DevToolsCog(commands.Cog):
                 self.bot.load_extension(cog)
             await interaction.response.send_message(content="Done", ephemeral=True)
         if cog in extensions:
-            self.bot.unload_extension(cog)  # Unloads the cog
-            self.bot.load_extension(cog)  # Loads the cog
+            await self.bot.unload_extension(cog)  # Unloads the cog
+            await self.bot.load_extension(cog)  # Loads the cog
             await interaction.response.send_message(content="Done", ephemeral=True)
         else:
             await interaction.response.send_message(content="Unknown Cog", ephemeral=True)
