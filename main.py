@@ -52,17 +52,6 @@ server_id = 1003666789995135006
 bot = abot(command_prefix="/", intents=intents)
 tree = bot.tree
 
-
-@tree.command(name="role", description="Display role menu (admins only)", guild=discord.Object(id=server_id))
-async def self(interaction:discord.Interaction):
-  adminRole = get(interaction.guild.roles, name="admin")
-  if adminRole not in interaction.user.roles:
-    await interaction.response.send_message(content="Only admins can use this command", ephemeral=True)
-  else:
-    view = b.AssignRole()
-    await interaction.response.send_message(content="Get roles here", view=view)
-
-
 @tree.command(name="join", description="join", guild=discord.Object(id=server_id))
 async def self(interaction:discord.Interaction):
   view = b.Website()

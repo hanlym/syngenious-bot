@@ -1,5 +1,3 @@
-import pymongo
-
 def length(cursor):
     c = 0
     for i in cursor:
